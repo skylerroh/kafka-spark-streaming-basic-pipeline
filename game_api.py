@@ -62,8 +62,9 @@ def change_inventory(user, item_category, quantity, item_type='basic'):
     category[item_type] = max(cur_quantity + quantity, 0)
     inventory[item_category] = category
     update_user_state(user, {'inventory': inventory})
-    inventory_event = {'event_type': '{}_transaction'.format(item_category),
+    inventory_event = {'event_type': 'transaction',
                        'transaction_type': 'purchase' if quantity > 0 else 'sell',
+                       'item_category': item_category,
                        'item_name': item_type,
                        'status': status}
     log_to_kafka('events', inventory_event)
@@ -127,9 +128,10 @@ def join_guild(guild_name):
     if guild:
         status = "Failed: Already part of a guild"
     else:
-        update_user_state(user, {'Guild': guild_name})
+        update_user_state(user, {'guild': guild_name})
         status = "Success: Joined {}".format(guild_name)
-    join_guild_event = {'event_type': 'join_guild',
+    join_guild_event = {'event_type': 'guild',
+                        'action': 'join',
                         'guild_name': guild_name,
                         'status': status}
     log_to_kafka('events', join_guild_event)
@@ -146,7 +148,8 @@ def leave_guild():
     else: 
         status = "Failed: Not currently part of a guild"
         
-    leave_guild_event = {'event_type': 'left_guild',
+    leave_guild_event = {'event_type': 'guild',
+                         'action': 'leave',
                          'guild_name': guild,
                          'status': status}
     log_to_kafka('events', leave_guild_event)
